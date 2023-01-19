@@ -2,44 +2,304 @@
 <html lang="en-US">
 <head>
   <meta charset="utf-8" />
-  <title>Gamedev Canvas Workshop</title>
+  <title>ブロック崩し</title>
   <style>
     * { padding: 0; margin: 0; }
     canvas { background: #eee; display: block; margin: 0 auto; }
   </style>
+  <link rel="stylesheet" href="design.css">
 </head>
 <body>
+  <div class="header">
+    <div class="titlegame">
+      <center>
+        <b>
+          ブロック崩し
+        </b>
+      </center>
+    </div>
+    <div class="subtitle">
+      いまこうのクソゲー
+    </div>
+  </div>
+  <canvas id="myCanvas" width="480" height="320"></canvas>
 
-<canvas id="myCanvas" width="480" height="320"></canvas>
+  <script>
+    // JavaScript のコードはここ
+    const canvas = document.getElementById("myCanvas");
+    const ctx = canvas.getContext("2d");
+    let x = canvas.width / 2;
+    let y = canvas.height - 20;
+    let dx = 0;
+    let dy = 0;
+    const ballRadius = 10;
+    let spacePressed = false;
+    let spacecount = 0;
+    let pdx = 0;
+    let pdy = 0;
+    let ispause = false;
+    let speed=2;
+    
+    //パドル
+    const paddleHeight = 10;
+    const paddleWidth = 75;
+    let paddleX = (canvas.width - paddleWidth) / 2;
+    let rightPressed = false;
+    let leftPressed = false;
 
-<script>
-  // JavaScript のコードはここ
-  const canvas = document.getElementById("myCanvas");
-  const ctx = canvas.getContext("2d");
-  let x = canvas.width / 2;
-  let y = canvas.height - 30;
-  let dx = 2;
-  let dy = -2;
+    //ブロック
+    const brickRowCount = 5;
+    const brickColumnCount = 7;
+    const brickWidth = 60;
+    const brickHeight = 15;
+    const brickPadding = 10;
+    const brickOffsetTop = 30;
+    const brickOffsetLeft = 0;
 
-  function drawball() {
-    // 描画コード
-    ctx.beginPath();
-    ctx.arc(x, y, 10, 0, Math.PI * 2);
-    ctx.fillStyle = "#0095DD";
-    ctx.fill();
-    ctx.closePath();
-  }
+    //UI設定
+    let score = 0;
+    let lives = 3;
+    let isnormal = true;
 
-  function draw() {
-    // 描画コード
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    drawball();
-    x+=dx;
-    y+=dy;
-  }
-  setInterval(draw, 10);
+    const bricks = [];
+    for (let c = 0; c < brickColumnCount; c++) {
+      bricks[c] = [];
+      for (let r = 0; r < brickRowCount; r++) {
+        bricks[c][r] = { x: 0, y: 0 , status: 1 };
+      }
+    }
 
-</script>
+    const colors = ["#66CCFF","#663399","#33CC66","#FF99FF","#FF9933"];
 
+    document.addEventListener("keydown", keyDownHandler, false);
+    document.addEventListener("keyup", keyUpHandler, false);
+    document.addEventListener("keypress", keyspaceHandler,false);
+    document.addEventListener("mousemove", mouseMoveHandler, false);
+
+    function keyDownHandler(e) {
+      if (e.key === "Right" || e.key === "ArrowRight") {
+        rightPressed = true;
+      } else if (e.key === "Left" || e.key === "ArrowLeft") {
+        leftPressed = true;
+      }
+    }
+
+    function keyUpHandler(e) {
+      if (e.key === "Right" || e.key === "ArrowRight") {
+        rightPressed = false;
+      } else if (e.key === "Left" || e.key === "ArrowLeft") {
+        leftPressed = false;
+      }
+    }
+
+    function keyspaceHandler(e) {
+      if ((e.key === " " && spacePressed ==false && spacecount==0) ||dy==0){
+        spacePressed = true;
+        spacecount ++;
+      }
+    }
+
+    function mouseMoveHandler(e) {
+      const relativeX = e.clientX - canvas.offsetLeft;
+      if (relativeX > 0 && relativeX < canvas.width && ispause==false) {
+        paddleX = relativeX - paddleWidth/2;
+        if((spacePressed == false && spacecount==0)){
+          x = paddleX + paddleWidth/2;
+        };
+      }
+    }
+
+    function collisionDetection() {
+      for (var c = 0; c < brickColumnCount; c++) {
+          for (var r = 0; r < brickRowCount; r++) {
+              var b = bricks[c][r];
+              if (b.status == 1) {
+                  if (x > b.x && x < b.x + brickWidth && y > b.y && y < b.y + brickHeight) {
+                      dy = -dy;
+                      b.status = 0;
+                      score+=10;
+                      if (score === brickRowCount * brickColumnCount*10) {
+                        alert("YOU WIN, CONGRATULATIONS!");
+                        document.location.reload();
+                      }
+                  }
+              }
+          }
+      }
+    }
+
+    function drawball() {
+      // 描画コード
+      ctx.beginPath();
+      ctx.arc(x, y, ballRadius, 0, Math.PI * 2);
+      ctx.fillStyle = "#800000";
+      ctx.fill();
+      ctx.closePath();
+    }
+
+    function drawPaddle() {
+      ctx.beginPath();
+      ctx.rect(paddleX, canvas.height - paddleHeight, paddleWidth, paddleHeight);
+      ctx.fillStyle = "#666666";
+      ctx.fill();
+      ctx.closePath();
+    }
+
+    function drawBricks() {
+      for (let c = 0; c < brickColumnCount; c++) {
+        for (let r = 0; r < brickRowCount; r++) {
+          if (bricks[c][r].status === 1) {
+            const brickX = (c*(brickWidth+brickPadding))+brickOffsetLeft;
+            const brickY = (r*(brickHeight+brickPadding))+brickOffsetTop;
+            bricks[c][r].x = brickX;
+            bricks[c][r].y = brickY;
+            ctx.beginPath();
+            ctx.rect(brickX, brickY, brickWidth, brickHeight);
+            ctx.fillStyle = colors[r];
+            ctx.fill();
+            ctx.stroke();
+            ctx.closePath();
+          }
+        }
+      }
+    }
+
+    function drawScore() {
+      ctx.font = "16px Arial";
+      ctx.fillStyle = "#000000";
+      ctx.fillText(`Score: ${score}`, 8, 20);
+    }
+
+    function drawLives() {
+      ctx.font = "16px Arial";
+      ctx.fillStyle = "#000000";
+      ctx.fillText(`Lives: ${lives}`, canvas.width - 65, 20);
+    }
+
+    function pausegame(){
+      if(ispause == false){
+        ispause = true;
+        pdx=dx;
+        pdy=dy;
+        dx=0;
+        dy=0;
+      } else if(ispause == true){
+        ispause = false;
+        dx=pdx;
+        dy=pdy;
+      }
+    }
+
+    function restart(){
+      document.location.reload();
+    }
+
+    function normalmode(){
+      if(isnormal==false && lives==3 && score==0){
+        isnormal==true;
+      } 
+    }
+
+    function cheatmode(){
+      if(isnormal==true && lives==3 && score==0){
+        isnormal=false;
+        console.log(isnormal);
+
+      } 
+    }
+    
+
+    function draw() {
+      // 描画コード
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawBricks();
+      drawball();
+      drawPaddle();
+      drawScore();
+      drawLives();
+      collisionDetection();
+
+      if (x + dx > canvas.width - ballRadius || x + dx < ballRadius) {
+        dx = -dx;
+      }
+      if (y + dy < ballRadius) {
+        dy = -dy;
+      } 
+      if(spacePressed==true && ispause==false){
+        if(isnormal==true){
+          dx = 2;
+          dy = -2;
+        } else if(isnormal==false){
+          dx = parseInt((Math.random()*6-3)*speed);
+          dy = parseInt(-Math.random()*2*speed);
+        }
+        
+        spacePressed=false;
+      }
+      else if(y + dy > canvas.height - ballRadius){
+        if (x > paddleX && x < paddleX + paddleWidth) {
+          if(y= y-paddleHeight){
+            if(isnormal==true){
+              dy = -dy;
+            } else if(isnormal==false){
+              dx = parseInt((Math.random()*6-3)*speed);
+              dy = parseInt(-Math.random()*2*speed);
+            }
+          }
+        }
+        else {
+          lives--;
+          dx = 0;
+          dy = 0;
+          spacecount=0;
+          if(lives==0){
+            alert("GAME OVER");
+            document.location.reload();
+          }
+          else {
+            x = canvas.width / 2;
+            y = canvas.height - 20;
+            paddleX = (canvas.width - paddleWidth) / 2;
+          }
+        }
+      }
+
+      //パドルの移動
+      if (rightPressed && paddleX < canvas.width - paddleWidth && ispause==false) {
+        paddleX += 4;
+      } else if (leftPressed && paddleX > 0 && ispause==false) {
+        paddleX -= 4;
+      }
+
+      x+=dx;
+      y+=dy;
+      requestAnimationFrame(draw);
+    }
+
+    draw();
+
+  </script>
+  <div class="buttons">
+    <button class = "button" onClick="restart()"><b>再スタート</b></button>
+    <button class = "button" onClick="pausegame()"><b>ポーズ</b></button>
+    <button class = "button" onClick="normalmode()"><b>ノーマル</b></button>
+    <button class = "button" onClick="cheatmode()"><b>イカサマ</b></button>
+  </div>
+  <div class= "explanationtitle">
+    <b>ゲーム説明:</b>
+  </div>
+  <div class= "explanation">
+    このゲームはお馴染みの「ブロック崩し」です。全てのブロックを崩してゲームクリアしていきましょう！<br>
+    ゲームのルールは２つあります。<br>
+    <b>ノーマルモード : </b>普通にブロックを崩してクリアしていくモードです。まずこのモードからプレイしていきましょう。<br>
+    <b>イカサマモード : </b>パドルからボールを反射する時、変則的な動きでボールが移動します。運試しにおすすめです！<br><br>
+  </div>
+  <div class= "explanationtitle">
+    <b>操作方法:</b>
+  </div>
+  <div class="explanation">
+    <b>パドル移動 : </b>マウスを使って動かします。<br>
+    <b>ボール発射 : </b>スペースキーを押します。イカサマモードでは真横に動いたときに使えます。<br>
+  </div>
 </body>
 </html>

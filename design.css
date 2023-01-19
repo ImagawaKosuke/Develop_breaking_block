@@ -1,0 +1,35 @@
+.header{
+    background-color: #a0eeff;
+}
+.titlegame{
+    font-size: 30px;
+}
+.subtitle{
+    text-align:right; 
+}
+
+.buttons{
+    text-align: center;
+    padding: 10px 10px;
+    background-color: #a0eeff;
+    padding-top: 0.6em;
+    font-size: 10px;
+}
+
+.button {
+    padding: 10px 10px;
+    width: 150px;
+    padding-top: 0.6em;
+    font-size: 20px;
+    background-color: #add8e6;
+}
+
+.explanationtitle{
+    padding-left: 30px;
+    font-size: 30px;
+}
+
+.explanation{
+    padding-left: 30px;
+    font-size: 15px;
+}
